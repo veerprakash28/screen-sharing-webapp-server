@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VP Screen Sharing App</title>
+  </head>
+  <body
+    style="
+      background: linear-gradient(45deg, #055a5a, #5466e9b8);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    "
+  >
+    <div
+      style="margin-top: 5px; margin-bottom: 5px; color: #fff; font-weight: 600"
+    >
+      VP Screen Sharing
+    </div>
+    <div style="width: 75%; max-width: 80%; margin-top: 2%">
+      <img style="width: 100%; height: auto" id="screenImg" />
+    </div>
+
+    <div style="margin-top: 20px">
+      <label
+        class="room-id"
+        for="roomId"
+        style="color: white; margin-right: 10px"
+        >Room ID:</label
+      >
+      <input type="text" id="roomId" />
+      <button onclick="joinRoom()">Join</button>
+      <p id="errorMessage" style="color: red; margin-top: 10px"></p>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.4/socket.io.js"
+      crossorigin="anonymous"
+    ></script>
+
+    <script>
+      var socket = io.connect("http://192.168.1.4:5001");
+      window.onload = function () {
+        socket.on("screen-data", function (message) {
+          $("#screenImg").attr("src", "data:image/png;base64," + message);
+        });
+
+        socket.on("join-success", function () {
+          // Hide the room input and show the image container
+          $("#roomId").hide();
+          $("button").hide();
+          $(".room-id").hide();
+          $("#screenImg").show();
+        });
+
+        socket.on("join-failure", function (errorMessage) {
+          // Show an error message on unsuccessful connection
+          $("#errorMessage").text(errorMessage);
+        });
+      };
+
+      function joinRoom() {
+        var room = $("#roomId").val().trim();
+        var errorMessageElement = document.getElementById("errorMessage");
+
+        if (room.length === 0) {
+          errorMessageElement.textContent = "Room ID is mandatory to join.";
+        } else {
+          errorMessageElement.textContent = "";
+
+          // Emit join-message event with the entered room ID
+          socket.emit("join-message", room);
+        }
+      }
+    </script>
+  </body>
+</html>
